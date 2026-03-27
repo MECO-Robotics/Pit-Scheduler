@@ -172,11 +172,15 @@ const sessions = {};
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
+  const body = req.body;
+
+  // Handle Slack's one-time URL verification BEFORE signature check
+  if (body.type === 'url_verification') {
+    return res.json({ challenge: body.challenge });
+  }
+
   const rawBody = JSON.stringify(req.body);
   if (!verifySlackSignature(req, rawBody)) return res.status(401).json({ error: 'Invalid signature' });
-
-  const body = req.body;
-  if (body.type === 'url_verification') return res.json({ challenge: body.challenge });
   if (body.type !== 'event_callback') return res.status(200).end();
 
   const event = body.event;
