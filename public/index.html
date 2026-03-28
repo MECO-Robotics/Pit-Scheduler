@@ -337,7 +337,18 @@
         body: JSON.stringify({ imageBase64: base64, mimeType, date })
       });
 
-      const data = await res.json();
+      const ct = (res.headers.get('content-type') || '').toLowerCase();
+      let data;
+      if (ct.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        throw new Error(
+          res.ok
+            ? `Unexpected response: ${text.slice(0, 160)}`
+            : `Server returned ${res.status}: ${text.slice(0, 160)}`
+        );
+      }
       if (!res.ok) throw new Error(data.error || 'Parse failed');
 
       parsedSchedule = data.schedule;
@@ -345,7 +356,12 @@
       document.getElementById('step2').classList.remove('hidden');
       document.getElementById('step2').scrollIntoView({ behavior: 'smooth' });
     } catch (e) {
-      alert('Error parsing schedule: ' + e.message);
+      let msg = e && e.message ? e.message : String(e);
+      if (e instanceof TypeError || /Failed to fetch|NetworkError|Load failed/i.test(msg)) {
+        msg =
+          'Could not reach /api/parse-schedule. Use your Vercel URL, or run `npx vercel dev` locally and put GEMINI_API_KEY (and other vars) in .env.local. Static preview alone has no API.';
+      }
+      alert('Error parsing schedule: ' + msg);
     } finally {
       btn.disabled = false;
       btnText.innerHTML = '🔍 Parse Schedule';

@@ -25,7 +25,6 @@ module.exports = async function handler(req, res) {
       }))
       .sort((a, b) => a.real_name.localeCompare(b.real_name));
 
-    // Return as a pretty HTML table so it's easy to read in the browser
     const rows = users.map(u =>
       `<tr>
         <td>${u.real_name}</td>

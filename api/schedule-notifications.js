@@ -11,7 +11,6 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Missing schedule or date' });
     }
 
-    // Load name → Slack user ID mapping
     const nameMapPath = path.join(process.cwd(), 'name-map.json');
     let nameMap;
     try {
@@ -20,7 +19,7 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: 'Could not read name-map.json: ' + e.message });
     }
 
-    const appUrl = process.env.APP_URL; // e.g. https://your-app.vercel.app
+    const appUrl = process.env.APP_URL;
     if (!appUrl) {
       return res.status(500).json({ error: 'APP_URL environment variable is not set' });
     }
@@ -64,7 +63,7 @@ module.exports = async function handler(req, res) {
       ];
 
       for (const job of jobs) {
-        if (job.time <= now) continue; // skip jobs in the past
+        if (job.time <= now) continue;
 
         const qstashRes = await fetch(
           `https://qstash.upstash.io/v2/publish/${appUrl}/api/send-notification`,
@@ -110,7 +109,6 @@ function parseDateTime(date, timeStr) {
   if (period === 'PM' && hours !== 12) hours += 12;
   if (period === 'AM' && hours === 12) hours = 0;
 
-  // Parse date as local midnight to avoid timezone shifting
   const [year, month, day] = date.split('-').map(Number);
   const dt = new Date(year, month - 1, day, hours, minutes, 0, 0);
   return dt;
