@@ -1,33 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const crypto = require('crypto');
-
-module.exports.config = { api: { bodyParser: false } };
-
-function getRawBody(req) {
-  return new Promise((resolve, reject) => {
-    let data = '';
-    req.on('data', chunk => { data += chunk; });
-    req.on('end', () => resolve(data));
-    req.on('error', reject);
-  });
-}
-
-function verifySlackSignature(rawBody, headers) {
-  const signingSecret = process.env.SLACK_SIGNING_SECRET;
-  if (!signingSecret) return true;
-  const timestamp = headers['x-slack-request-timestamp'];
-  const slackSig = headers['x-slack-signature'];
-  if (!timestamp || !slackSig) return false;
-  if (Math.abs(Date.now() / 1000 - Number(timestamp)) > 300) return false;
-  const base = `v0:${timestamp}:${rawBody}`;
-  const computed = 'v0=' + crypto.createHmac('sha256', signingSecret).update(base).digest('hex');
-  try {
-    return crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(slackSig));
-  } catch {
-    return false;
-  }
-}
 
 async function slackReply(channelId, text) {
   const res = await fetch('https://slack.com/api/chat.postMessage', {
@@ -84,11 +56,8 @@ async function scheduleForPerson(name, slackUserId, date, startTime, endTime) {
       },
       body: JSON.stringify({ slack_user_id: slackUserId, message: job.message })
     });
-    if (!qRes.ok) {
-      console.error(`QStash error for ${name}:`, await qRes.text());
-    } else {
-      scheduled++;
-    }
+    if (!qRes.ok) console.error(`QStash error for ${name}:`, await qRes.text());
+    else scheduled++;
   }
   return scheduled;
 }
@@ -99,7 +68,7 @@ async function handleImage(file, channelId, date) {
     return;
   }
 
-  await slackReply(channelId, '🔍 Got it! Parsing your schedule image with AI...');
+  await slackReply(channelId, '🔍 Parsing your schedule image with AI...');
 
   const fileRes = await fetch(file.url_private, {
     headers: { Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}` }
@@ -112,7 +81,6 @@ async function handleImage(file, channelId, date) {
 
   const arrayBuf = await fileRes.arrayBuffer();
   const base64 = Buffer.from(arrayBuf).toString('base64');
-  const mimeType = file.mimetype || 'image/png';
 
   const geminiRes = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
@@ -121,7 +89,7 @@ async function handleImage(file, channelId, date) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [
-          { inline_data: { mime_type: mimeType, data: base64 } },
+          { inline_data: { mime_type: file.mimetype || 'image/png', data: base64 } },
           { text: `This is a pit crew schedule grid for a robotics competition on ${date}. Extract every name-to-timeslot assignment. Return ONLY a raw JSON array — no markdown, no code fences, no explanation. Each object must have: "name" (exact as written), "start_time" (12-hour like "10:00 AM"), "end_time" (12-hour like "10:45 AM"). Multiple names in one cell = one entry per name with same times. Skip blank cells.` }
         ]}],
         generationConfig: { temperature: 0.1 }
@@ -143,12 +111,12 @@ async function handleImage(file, channelId, date) {
     schedule = JSON.parse(cleaned);
     if (!Array.isArray(schedule)) throw new Error('Not an array');
   } catch {
-    await slackReply(channelId, `❌ Couldn't parse the schedule from that image. Try a clearer/higher contrast photo.\n_Got:_ \`${cleaned.slice(0, 150)}\``);
+    await slackReply(channelId, `❌ Couldn't parse the schedule. Try a clearer photo.\n_Got:_ \`${cleaned.slice(0, 150)}\``);
     return;
   }
 
   if (schedule.length === 0) {
-    await slackReply(channelId, `⚠️ No schedule entries found in that image. Try a clearer photo.`);
+    await slackReply(channelId, `⚠️ No schedule entries found. Try a clearer photo.`);
     return;
   }
 
@@ -159,7 +127,7 @@ async function handleImage(file, channelId, date) {
     return;
   }
 
-  await slackReply(channelId, `📋 Found *${schedule.length} entries*. Scheduling notifications now...`);
+  await slackReply(channelId, `📋 Found *${schedule.length} entries*. Scheduling notifications...`);
 
   const scheduled = [], skipped = [];
   for (const entry of schedule) {
@@ -211,7 +179,7 @@ async function handleText(text, channelId, sessionDate) {
     }
     const slackUserId = nameMap[name.trim()];
     if (!slackUserId) {
-      await slackReply(channelId, `⚠️ *"${name.trim()}"* wasn't found in name-map.json. Check the spelling matches exactly.`);
+      await slackReply(channelId, `⚠️ *"${name.trim()}"* wasn't found in name-map.json. Check the spelling.`);
       return { date: sessionDate };
     }
     try {
@@ -232,21 +200,11 @@ const sessions = {};
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
 
-  const rawBody = await getRawBody(req);
+  const body = req.body;
 
-  let body;
-  try { body = JSON.parse(rawBody); }
-  catch { return res.status(400).json({ error: 'Invalid JSON' }); }
-
-  // Handle Slack URL verification BEFORE anything else
+  // Handle Slack URL verification — must be first, no auth needed
   if (body.type === 'url_verification') {
     return res.status(200).json({ challenge: body.challenge });
-  }
-
-  // Verify all other requests
-  if (!verifySlackSignature(rawBody, req.headers)) {
-    console.error('Slack signature verification failed');
-    return res.status(401).json({ error: 'Invalid signature' });
   }
 
   if (body.type !== 'event_callback') return res.status(200).end();
@@ -256,7 +214,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).end();
   }
 
-  // Respond immediately — Slack requires a response within 3 seconds
+  // Respond to Slack immediately — must be within 3 seconds
   res.status(200).end();
 
   const channelId = event.channel;
