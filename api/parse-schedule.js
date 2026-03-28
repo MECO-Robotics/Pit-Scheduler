@@ -9,14 +9,11 @@ module.exports = async function handler(req, res) {
     }
 
     if (!process.env.GEMINI_API_KEY) {
-      return res.status(500).json({
-        error:
-          'GEMINI_API_KEY is not set. Add it in Vercel → Environment Variables, or in .env.local when using `npx vercel dev`.'
-      });
+      return res.status(500).json({ error: 'GEMINI_API_KEY is not set in Vercel environment variables' });
     }
 
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -32,6 +29,7 @@ module.exports = async function handler(req, res) {
       }
     );
 
+    // Check if Gemini returned an HTTP error
     if (!geminiRes.ok) {
       const errText = await geminiRes.text();
       console.error('Gemini HTTP error:', geminiRes.status, errText);

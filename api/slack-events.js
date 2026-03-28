@@ -40,8 +40,8 @@ async function scheduleForPerson(name, slackUserId, date, startTime, endTime) {
 
   const jobs = [
     { time: headsUpDT, message: `🔔 *Heads-up!* You're on pit duty in 15 minutes — *${startTime}* to *${endTime}*. Start heading over!` },
-    { time: startDT, message: `🚨 *Your pit shift starts now!* Head to the pit area. _(${startTime} – ${endTime})_` },
-    { time: endDT, message: `✅ *Your pit shift is over!* Great work — you're free to go. _(${startTime} – ${endTime})_` }
+    { time: startDT,   message: `🚨 *Your pit shift starts now!* Head to the pit area. _(${startTime} – ${endTime})_` },
+    { time: endDT,     message: `✅ *Your pit shift is over!* Great work — you're free to go. _(${startTime} – ${endTime})_` }
   ];
 
   let scheduled = 0;
@@ -83,7 +83,7 @@ async function handleImage(file, channelId, date) {
   const base64 = Buffer.from(arrayBuf).toString('base64');
 
   const geminiRes = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -202,6 +202,7 @@ module.exports = async function handler(req, res) {
 
   const body = req.body;
 
+  // Handle Slack URL verification — must be first, no auth needed
   if (body.type === 'url_verification') {
     return res.status(200).json({ challenge: body.challenge });
   }
@@ -213,6 +214,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).end();
   }
 
+  // Respond to Slack immediately — must be within 3 seconds
   res.status(200).end();
 
   const channelId = event.channel;
