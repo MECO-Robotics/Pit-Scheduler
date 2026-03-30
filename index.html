@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>MECO 8324 — Team Scheduler</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -22,83 +22,92 @@
       background: var(--navy);
       color: var(--white);
       min-height: 100vh;
+      font-size: 16px;
     }
 
     /* TOP BAR */
     .topbar {
       background: var(--navy-mid);
       border-bottom: 3px solid var(--red);
-      padding: 0 24px;
+      padding: 0 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 64px;
+      height: 60px;
       position: sticky;
       top: 0;
       z-index: 100;
+      gap: 8px;
     }
-    .topbar-left { display: flex; align-items: center; gap: 12px; }
-    .brand { font-weight: 700; font-size: 1.2rem; letter-spacing: 0.04em; }
+    .topbar-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .brand { font-weight: 700; font-size: 1.1rem; letter-spacing: 0.04em; white-space: nowrap; }
     .brand span { color: var(--red-bright); }
-    .brand-sub { font-size: 0.6rem; color: var(--gray); letter-spacing: 0.12em; text-transform: uppercase; }
-    .topbar-actions { display: flex; gap: 8px; }
+    .brand-sub { font-size: 0.55rem; color: var(--gray); letter-spacing: 0.1em; text-transform: uppercase; }
+    .topbar-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .clock { font-size: 0.68rem; color: var(--gray-dim); white-space: nowrap; display: none; }
+    @media (min-width: 600px) { .clock { display: inline; } }
 
     /* NOW PANEL */
     .now-panel {
       background: linear-gradient(135deg, #0f2044, #1a1a3e);
       border-bottom: 1px solid var(--navy-border);
-      padding: 14px 24px;
+      padding: 12px 16px;
     }
-    .now-panel h2 { font-size: 0.65rem; color: var(--red-bright); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 10px; font-weight: 700; }
-    .now-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+    .now-panel h2 { font-size: 0.62rem; color: var(--red-bright); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 8px; font-weight: 700; }
+    .now-grid { display: flex; gap: 8px; flex-wrap: wrap; }
     .now-card {
       background: var(--navy);
       border: 1px solid var(--navy-border);
       border-radius: 8px;
-      padding: 10px 16px;
-      min-width: 160px;
+      padding: 8px 12px;
+      flex: 1;
+      min-width: 130px;
+      max-width: 220px;
     }
-    .now-card.pit    { border-left: 3px solid var(--red-bright); }
+    .now-card.pit      { border-left: 3px solid var(--red-bright); }
     .now-card.scouting { border-left: 3px solid #60a5fa; }
-    .now-name { font-weight: 600; font-size: 0.9rem; }
-    .now-meta { font-size: 0.72rem; color: var(--gray); margin-top: 2px; }
-    .now-empty { color: var(--gray-dim); font-size: 0.82rem; font-style: italic; }
+    .now-name { font-weight: 600; font-size: 0.88rem; }
+    .now-meta { font-size: 0.7rem; color: var(--gray); margin-top: 2px; }
+    .now-empty { color: var(--gray-dim); font-size: 0.8rem; font-style: italic; }
 
     /* NEXT UP */
     .nextup-panel {
       background: var(--navy-mid);
       border-bottom: 1px solid var(--navy-border);
-      padding: 10px 24px;
+      padding: 8px 16px;
       display: flex;
-      align-items: center;
-      gap: 10px;
+      align-items: flex-start;
+      gap: 8px;
       flex-wrap: wrap;
     }
-    .nextup-label { font-size: 0.65rem; color: var(--gray-dim); letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; white-space: nowrap; }
+    .nextup-label { font-size: 0.62rem; color: var(--gray-dim); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; white-space: nowrap; padding-top: 6px; }
+    .nextup-items { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
     .nextup-item {
       background: var(--navy);
       border: 1px solid var(--navy-border);
       border-radius: 6px;
-      padding: 5px 12px;
-      font-size: 0.78rem;
+      padding: 4px 10px;
+      font-size: 0.75rem;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
-    .nextup-countdown { color: var(--red-bright); font-weight: 700; font-size: 0.72rem; }
+    .nextup-countdown { color: var(--red-bright); font-weight: 700; font-size: 0.7rem; }
 
     /* DAY TABS */
     .day-tabs {
       display: flex;
-      gap: 0;
       border-bottom: 1px solid var(--navy-border);
       background: var(--navy-mid);
-      padding: 0 24px;
+      padding: 0 16px;
       overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
     }
+    .day-tabs::-webkit-scrollbar { display: none; }
     .day-tab {
-      padding: 12px 20px;
-      font-size: 0.8rem;
+      padding: 11px 16px;
+      font-size: 0.78rem;
       font-weight: 600;
       color: var(--gray-dim);
       cursor: pointer;
@@ -109,87 +118,124 @@
       border-top: none;
       border-left: none;
       border-right: none;
+      flex-shrink: 0;
     }
     .day-tab:hover { color: var(--gray); }
     .day-tab.active { color: var(--white); border-bottom-color: var(--red-bright); }
 
     /* MAIN */
-    .main { max-width: 960px; margin: 0 auto; padding: 22px 20px; }
+    .main { max-width: 960px; margin: 0 auto; padding: 16px; }
 
     /* STATS */
-    .stats { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
-    .stat { background: var(--navy-mid); border: 1px solid var(--navy-border); border-radius: 8px; padding: 10px 16px; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+    @media (max-width: 400px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+    .stat { background: var(--navy-mid); border: 1px solid var(--navy-border); border-radius: 8px; padding: 10px 12px; }
     .stat-val { font-size: 1.4rem; font-weight: 700; color: var(--red-bright); line-height: 1; }
-    .stat-label { color: var(--gray-dim); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+    .stat-label { color: var(--gray-dim); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
 
     /* CARD */
-    .card { background: var(--navy-mid); border: 1px solid var(--navy-border); border-radius: 10px; padding: 20px 22px; margin-bottom: 18px; }
-    .section-label { font-size: 0.65rem; color: var(--red-bright); letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; margin-bottom: 10px; }
+    .card { background: var(--navy-mid); border: 1px solid var(--navy-border); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+    .section-label { font-size: 0.62rem; color: var(--red-bright); letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; margin-bottom: 8px; }
 
     /* FORM */
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; }
-    .form-group label { display: block; font-size: 0.68rem; color: var(--gray-dim); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    @media (min-width: 600px) { .form-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (min-width: 860px) { .form-grid { grid-template-columns: repeat(5, 1fr); } }
+    .form-group label { display: block; font-size: 0.65rem; color: var(--gray-dim); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
     .form-group input, .form-group select {
-      width: 100%; padding: 8px 10px;
+      width: 100%; padding: 10px 10px;
       background: var(--navy); border: 1px solid var(--navy-border);
-      border-radius: 6px; color: var(--white); font-size: 0.83rem;
+      border-radius: 6px; color: var(--white); font-size: 0.9rem;
       outline: none; transition: border-color 0.15s;
+      -webkit-appearance: none;
     }
     .form-group input:focus, .form-group select:focus { border-color: var(--red); }
     .form-group select option { background: var(--navy-mid); }
 
     /* BUTTONS */
-    .btn { padding: 8px 16px; border: none; border-radius: 6px; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .btn {
+      padding: 10px 16px;
+      border: none; border-radius: 6px;
+      font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
     .btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn-red { background: var(--red); color: #fff; }
     .btn-red:hover:not(:disabled) { background: var(--red-bright); }
     .btn-outline { background: transparent; color: var(--gray); border: 1px solid var(--navy-border); }
     .btn-outline:hover:not(:disabled) { border-color: var(--gray); color: var(--white); }
-    .btn-sm { padding: 4px 9px; font-size: 0.74rem; border-radius: 5px; background: var(--navy-light); color: var(--gray); border: 1px solid var(--navy-border); }
-    .btn-sm:hover:not(:disabled) { color: var(--white); }
-    .btn-danger { padding: 4px 9px; font-size: 0.74rem; border-radius: 5px; background: transparent; color: var(--red-bright); border: 1px solid #7f1d1d; }
-    .btn-danger:hover:not(:disabled) { background: rgba(231,76,60,0.1); }
-    .btn-resend { padding: 4px 9px; font-size: 0.74rem; border-radius: 5px; background: transparent; color: #fbbf24; border: 1px solid #78350f; }
-    .btn-resend:hover:not(:disabled) { background: rgba(251,191,36,0.1); }
+    .btn-sm { padding: 6px 10px; font-size: 0.76rem; border-radius: 5px; background: var(--navy-light); color: var(--gray); border: 1px solid var(--navy-border); }
+    .btn-danger { padding: 6px 10px; font-size: 0.76rem; border-radius: 5px; background: transparent; color: var(--red-bright); border: 1px solid #7f1d1d; }
+    .btn-resend { padding: 6px 10px; font-size: 0.76rem; border-radius: 5px; background: transparent; color: #fbbf24; border: 1px solid #78350f; }
+
+    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
 
     /* TOOLBAR */
-    .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
-    .toolbar select, .toolbar input {
-      padding: 6px 10px; background: var(--navy); border: 1px solid var(--navy-border);
-      border-radius: 6px; color: var(--white); font-size: 0.78rem; outline: none;
+    .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+    .toolbar select {
+      padding: 8px 10px; background: var(--navy); border: 1px solid var(--navy-border);
+      border-radius: 6px; color: var(--white); font-size: 0.82rem; outline: none;
+      -webkit-appearance: none; flex: 1; min-width: 120px;
     }
-    .toolbar select:focus, .toolbar input:focus { border-color: var(--red); }
-    .toolbar-label { font-size: 0.68rem; color: var(--gray-dim); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+    .toolbar-label { font-size: 0.65rem; color: var(--gray-dim); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
     .toolbar-gap { flex: 1; }
 
-    /* TABLE */
-    table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
-    th { text-align: left; padding: 9px 12px; color: var(--gray-dim); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid var(--navy-border); font-weight: 600; }
-    td { padding: 10px 12px; border-bottom: 1px solid rgba(30,58,110,0.4); vertical-align: middle; }
+    /* TABLE — scrollable on mobile */
+    .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 500px; }
+    th { text-align: left; padding: 9px 10px; color: var(--gray-dim); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid var(--navy-border); font-weight: 600; }
+    td { padding: 10px 10px; border-bottom: 1px solid rgba(30,58,110,0.4); vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
-    tr:hover td { background: rgba(255,255,255,0.02); }
 
-    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+    /* MOBILE CARD VIEW — show instead of table on small screens */
+    .shift-cards { display: none; }
+    @media (max-width: 600px) {
+      .table-scroll { display: none; }
+      .shift-cards  { display: block; }
+    }
+    .shift-card {
+      background: var(--navy);
+      border: 1px solid var(--navy-border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+    }
+    .shift-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+    .shift-card-name { font-weight: 600; font-size: 0.92rem; }
+    .shift-card-meta { font-size: 0.76rem; color: var(--gray); margin-bottom: 8px; }
+    .shift-card-actions { display: flex; gap: 6px; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
     .badge-pit      { background: rgba(192,57,43,0.2); color: #f87171; border: 1px solid rgba(192,57,43,0.35); }
     .badge-scouting { background: rgba(96,165,250,0.15); color: #93c5fd; border: 1px solid rgba(96,165,250,0.3); }
 
-    .sent-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 3px; }
+    .sent-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 2px; }
     .sent-dot.yes { background: #34d399; }
     .sent-dot.no  { background: var(--navy-border); }
 
     .actions-cell { display: flex; gap: 5px; flex-wrap: wrap; }
 
-    .empty { text-align: center; padding: 36px; color: var(--gray-dim); font-size: 0.85rem; }
+    .empty { text-align: center; padding: 32px; color: var(--gray-dim); font-size: 0.85rem; }
 
     .spinner { width: 15px; height: 15px; border: 2px solid rgba(255,255,255,0.1); border-top-color: var(--red-bright); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 6px; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .toast { position: fixed; bottom: 20px; right: 20px; padding: 11px 18px; border-radius: 8px; font-size: 0.83rem; font-weight: 500; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; }
+    .toast { position: fixed; bottom: 16px; right: 16px; left: 16px; padding: 12px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 999; text-align: center; }
+    @media (min-width: 500px) { .toast { left: auto; min-width: 260px; max-width: 360px; } }
     .toast.show { opacity: 1; }
     .toast-ok  { background: #0a2a1a; color: #6ee7b7; border: 1px solid #065f46; }
     .toast-err { background: #2a0a0a; color: #fca5a5; border: 1px solid #991b1b; }
 
-    .clock { font-size: 0.72rem; color: var(--gray-dim); }
+    textarea {
+      width: 100%; height: 80px;
+      background: var(--navy); border: 1px solid var(--navy-border);
+      border-radius: 6px; color: var(--white);
+      padding: 10px; font-size: 0.78rem;
+      font-family: monospace; outline: none; resize: vertical;
+    }
+    textarea:focus { border-color: var(--red); }
   </style>
 </head>
 <body>
@@ -197,7 +243,7 @@
 <!-- TOP BAR -->
 <div class="topbar">
   <div class="topbar-left">
-    <svg width="38" height="38" viewBox="0 0 100 115" xmlns="http://www.w3.org/2000/svg">
+    <svg width="36" height="36" viewBox="0 0 100 115" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
       <polygon points="50,5 95,27.5 95,87.5 50,110 5,87.5 5,27.5" fill="#0f2044" stroke="#c0392b" stroke-width="6"/>
       <text x="50" y="74" text-anchor="middle" font-family="sans-serif" font-weight="700" font-size="24" fill="#f0f4ff">8324</text>
       <polygon points="50,20 57,36 50,32 43,36" fill="#c0392b"/>
@@ -210,8 +256,8 @@
   </div>
   <div class="topbar-actions">
     <span class="clock" id="clock"></span>
-    <button class="btn btn-outline" onclick="postSchedule()">Post to Slack</button>
-    <button class="btn btn-red" onclick="activateNotifications()">Activate Notifications</button>
+    <button class="btn btn-outline" style="padding:8px 10px;font-size:0.78rem;" onclick="postSchedule()">Post to Slack</button>
+    <button class="btn btn-red" style="padding:8px 10px;font-size:0.78rem;" onclick="activateNotifications()">Activate</button>
   </div>
 </div>
 
@@ -224,7 +270,7 @@
 <!-- NEXT UP -->
 <div class="nextup-panel">
   <span class="nextup-label">Next Up</span>
-  <div id="nextUpItems" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+  <div class="nextup-items" id="nextUpItems"></div>
 </div>
 
 <!-- DAY TABS -->
@@ -235,7 +281,7 @@
 
   <!-- STATS -->
   <div class="stats">
-    <div class="stat"><div class="stat-val" id="statTotal">-</div><div class="stat-label">Total Shifts</div></div>
+    <div class="stat"><div class="stat-val" id="statTotal">-</div><div class="stat-label">Shifts</div></div>
     <div class="stat"><div class="stat-val" id="statPit">-</div><div class="stat-label">Pit</div></div>
     <div class="stat"><div class="stat-val" id="statScouting">-</div><div class="stat-label">Scouting</div></div>
     <div class="stat"><div class="stat-val" id="statPeople">-</div><div class="stat-label">People</div></div>
@@ -269,35 +315,42 @@
         <input type="text" id="addEnd" placeholder="10:45 AM" />
       </div>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <div class="btn-group">
       <button class="btn btn-red" onclick="addRow()">+ Add Shift</button>
-      <button class="btn btn-outline" onclick="clearSentFlags()">Reset Notification Flags</button>
+      <button class="btn btn-outline" onclick="clearSentFlags()">Reset Notif Flags</button>
     </div>
   </div>
 
   <!-- BULK IMPORT -->
   <div class="section-label">Bulk Import CSV</div>
   <div class="card">
-    <p style="font-size:0.78rem;color:var(--gray);margin-bottom:10px;">Paste CSV rows below (Name,Type,Date,Start,End) — one per line, no header needed.</p>
-    <textarea id="csvInput" style="width:100%;height:80px;background:var(--navy);border:1px solid var(--navy-border);border-radius:6px;color:var(--white);padding:10px;font-size:0.78rem;font-family:monospace;outline:none;resize:vertical;" placeholder="Grant Brady,pit,2026-04-05,7:45 AM,11:00 AM&#10;Kayleigh Di Miceli,pit,2026-04-05,7:45 AM,10:00 AM"></textarea>
+    <p style="font-size:0.76rem;color:var(--gray);margin-bottom:10px;">Paste CSV rows (Name,Type,Date,Start,End) — one per line, no header.</p>
+    <textarea id="csvInput" placeholder="Grant Brady,pit,2026-04-05,7:45 AM,11:00 AM"></textarea>
     <br/><br/>
     <button class="btn btn-red" onclick="bulkImport()">Import Rows</button>
   </div>
 
-  <!-- SCHEDULE TABLE -->
+  <!-- SCHEDULE -->
   <div class="section-label">Schedule</div>
   <div class="card">
     <div class="toolbar">
-      <span class="toolbar-label">Filter:</span>
+      <span class="toolbar-label">Type:</span>
       <select id="filterType" onchange="renderTable()">
-        <option value="">All Types</option>
+        <option value="">All</option>
         <option value="pit">Pit</option>
         <option value="scouting">Scouting</option>
       </select>
       <div class="toolbar-gap"></div>
-      <button class="btn btn-outline" style="font-size:0.74rem;padding:5px 10px;" onclick="printSchedule()">Print View</button>
+      <button class="btn btn-outline" style="font-size:0.74rem;padding:7px 10px;" onclick="printSchedule()">Print</button>
     </div>
-    <div id="tableWrap"><div class="empty"><span class="spinner"></span> Loading...</div></div>
+
+    <!-- Desktop table -->
+    <div class="table-scroll">
+      <div id="tableWrap"><div class="empty"><span class="spinner"></span> Loading...</div></div>
+    </div>
+
+    <!-- Mobile cards -->
+    <div class="shift-cards" id="cardsWrap"></div>
   </div>
 
 </div>
@@ -305,10 +358,8 @@
 <div class="toast" id="toast"></div>
 
 <script>
-var allRows     = [];
-var activeDate  = '';
-var allDates    = [];
-var countdownInterval = null;
+var allRows    = [];
+var activeDate = '';
 
 window.onload = function() {
   loadNames();
@@ -318,13 +369,11 @@ window.onload = function() {
   setInterval(updateNowAndNext, 30000);
 };
 
-// ── CLOCK ──────────────────────────────────────────────────────────────────
 function updateClock() {
   var now = new Date();
-  document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 }
 
-// ── LOAD DATA ───────────────────────────────────────────────────────────────
 function loadNames() {
   google.script.run
     .withSuccessHandler(function(list) {
@@ -339,6 +388,7 @@ function loadNames() {
 
 function loadSchedule() {
   document.getElementById('tableWrap').innerHTML = '<div class="empty"><span class="spinner"></span> Loading...</div>';
+  document.getElementById('cardsWrap').innerHTML = '<div class="empty"><span class="spinner"></span> Loading...</div>';
   google.script.run
     .withSuccessHandler(function(rows) {
       allRows = rows;
@@ -349,23 +399,21 @@ function loadSchedule() {
     })
     .withFailureHandler(function(e) {
       document.getElementById('tableWrap').innerHTML = '<div class="empty">Error: ' + e.message + '</div>';
+      document.getElementById('cardsWrap').innerHTML = '<div class="empty">Error: ' + e.message + '</div>';
     })
     .getSchedule();
 }
 
-// ── DAY TABS ────────────────────────────────────────────────────────────────
 function buildDayTabs(rows) {
   var dates = {};
   rows.forEach(function(r) { if (r.date) dates[r.date] = true; });
-  allDates = Object.keys(dates).sort();
-
+  var allDates = Object.keys(dates).sort();
   var container = document.getElementById('dayTabs');
   container.innerHTML = '';
 
-  // "All" tab
   var allTab = document.createElement('button');
   allTab.className = 'day-tab' + (activeDate === '' ? ' active' : '');
-  allTab.textContent = 'All Days';
+  allTab.textContent = 'All';
   allTab.onclick = function() { setActiveDate(''); };
   container.appendChild(allTab);
 
@@ -385,54 +433,35 @@ function setActiveDate(date) {
   renderTable();
 }
 
-// ── WHO'S ON NOW + NEXT UP ──────────────────────────────────────────────────
 function updateNowAndNext() {
-  var now    = new Date();
-  var onNow  = [];
-  var upcoming = [];
+  var now = new Date();
+  var onNow = [], upcoming = [];
 
   allRows.forEach(function(r) {
     if (!r.date || !r.start || !r.end) return;
-    var startDT = parseTime(r.date, r.start);
-    var endDT   = parseTime(r.date, r.end);
-    if (!startDT || !endDT) return;
-
-    if (now >= startDT && now < endDT) {
-      onNow.push(r);
-    } else if (startDT > now && (startDT - now) < 60 * 60 * 1000) {
-      upcoming.push({ row: r, startDT: startDT, diff: startDT - now });
-    }
+    var s = parseTime(r.date, r.start);
+    var e = parseTime(r.date, r.end);
+    if (!s || !e) return;
+    if (now >= s && now < e) { onNow.push(r); }
+    else if (s > now && (s - now) < 60 * 60 * 1000) { upcoming.push({ row: r, diff: s - now, start: s }); }
   });
 
   upcoming.sort(function(a, b) { return a.diff - b.diff; });
 
-  // Now panel
   var nowGrid = document.getElementById('nowGrid');
-  if (onNow.length === 0) {
-    nowGrid.innerHTML = '<div class="now-empty">Nobody scheduled right now</div>';
-  } else {
-    nowGrid.innerHTML = onNow.map(function(r) {
-      return '<div class="now-card ' + r.type + '">' +
-        '<div class="now-name">' + esc(r.name) + '</div>' +
-        '<div class="now-meta">' + (r.type === 'scouting' ? 'Scouting' : 'Pit') + ' &mdash; until ' + esc(r.end) + '</div>' +
-        '</div>';
-    }).join('');
-  }
+  nowGrid.innerHTML = onNow.length === 0
+    ? '<div class="now-empty">Nobody scheduled right now</div>'
+    : onNow.map(function(r) {
+        return '<div class="now-card ' + r.type + '"><div class="now-name">' + esc(r.name) + '</div><div class="now-meta">' + (r.type === 'scouting' ? 'Scouting' : 'Pit') + ' until ' + esc(r.end) + '</div></div>';
+      }).join('');
 
-  // Next up panel
   var nextEl = document.getElementById('nextUpItems');
-  if (upcoming.length === 0) {
-    nextEl.innerHTML = '<span style="font-size:0.78rem;color:var(--gray-dim);">Nothing in the next hour</span>';
-  } else {
-    nextEl.innerHTML = upcoming.slice(0, 4).map(function(u) {
-      var mins = Math.round(u.diff / 60000);
-      var typeLabel = u.row.type === 'scouting' ? 'Scouting' : 'Pit';
-      return '<div class="nextup-item">' +
-        esc(u.row.name) + ' &mdash; ' + typeLabel + ' at ' + esc(u.row.start) +
-        '<span class="nextup-countdown">in ' + mins + 'min</span>' +
-        '</div>';
-    }).join('');
-  }
+  nextEl.innerHTML = upcoming.length === 0
+    ? '<span style="font-size:0.76rem;color:var(--gray-dim);">Nothing in the next hour</span>'
+    : upcoming.slice(0, 3).map(function(u) {
+        var mins = Math.round(u.diff / 60000);
+        return '<div class="nextup-item">' + esc(u.row.name) + ' &mdash; ' + (u.row.type === 'scouting' ? 'Scouting' : 'Pit') + ' at ' + esc(u.row.start) + '<span class="nextup-countdown">in ' + mins + 'min</span></div>';
+      }).join('');
 }
 
 function parseTime(date, timeStr) {
@@ -447,23 +476,17 @@ function parseTime(date, timeStr) {
   } catch(e) { return null; }
 }
 
-// ── STATS ───────────────────────────────────────────────────────────────────
 function updateStats(rows) {
-  var filtered = activeDate ? rows.filter(function(r) { return r.date === activeDate; }) : rows;
-  var pit      = filtered.filter(function(r) { return r.type === 'pit'; }).length;
-  var scouting = filtered.filter(function(r) { return r.type === 'scouting'; }).length;
-  var people   = new Set(filtered.map(function(r) { return r.name; })).size;
-  document.getElementById('statTotal').textContent    = filtered.length;
-  document.getElementById('statPit').textContent      = pit;
-  document.getElementById('statScouting').textContent = scouting;
-  document.getElementById('statPeople').textContent   = people;
+  var f = activeDate ? rows.filter(function(r) { return r.date === activeDate; }) : rows;
+  document.getElementById('statTotal').textContent    = f.length;
+  document.getElementById('statPit').textContent      = f.filter(function(r) { return r.type === 'pit'; }).length;
+  document.getElementById('statScouting').textContent = f.filter(function(r) { return r.type === 'scouting'; }).length;
+  document.getElementById('statPeople').textContent   = new Set(f.map(function(r) { return r.name; })).size;
 }
 
-// ── RENDER TABLE ─────────────────────────────────────────────────────────────
 function renderTable() {
   updateStats(allRows);
   var filterType = document.getElementById('filterType').value;
-
   var filtered = allRows.filter(function(r) {
     if (activeDate && r.date !== activeDate) return false;
     if (filterType && r.type !== filterType) return false;
@@ -471,44 +494,54 @@ function renderTable() {
   });
 
   if (filtered.length === 0) {
-    document.getElementById('tableWrap').innerHTML = '<div class="empty">No shifts found. Add one above!</div>';
+    document.getElementById('tableWrap').innerHTML = '<div class="empty">No shifts found.</div>';
+    document.getElementById('cardsWrap').innerHTML = '<div class="empty">No shifts found.</div>';
     return;
   }
 
-  var html = '<table><thead><tr><th>Name</th><th>Type</th><th>Date</th><th>Start</th><th>End</th><th>Notifs</th><th></th></tr></thead><tbody>';
-
+  // Desktop table
+  var html = '<table><thead><tr><th>Name</th><th>Type</th><th>Date</th><th>Start</th><th>End</th><th>Sent</th><th></th></tr></thead><tbody>';
   filtered.forEach(function(r) {
     var bc = r.type === 'scouting' ? 'badge-scouting' : 'badge-pit';
     var tl = r.type === 'scouting' ? 'Scouting' : 'Pit';
-    var hDot = '<span class="sent-dot ' + (r.sentHeadsup ? 'yes' : 'no') + '" title="Heads-up"></span>';
-    var sDot = '<span class="sent-dot ' + (r.sentStart   ? 'yes' : 'no') + '" title="Start"></span>';
-    var eDot = '<span class="sent-dot ' + (r.sentEnd     ? 'yes' : 'no') + '" title="End"></span>';
-
-    html += '<tr>' +
-      '<td>' + esc(r.name) + '</td>' +
-      '<td><span class="badge ' + bc + '">' + tl + '</span></td>' +
-      '<td>' + esc(r.date) + '</td>' +
-      '<td>' + esc(r.start) + '</td>' +
-      '<td>' + esc(r.end) + '</td>' +
-      '<td>' + hDot + sDot + eDot + '</td>' +
+    var dots = '<span class="sent-dot ' + (r.sentHeadsup ? 'yes' : 'no') + '"></span>' +
+               '<span class="sent-dot ' + (r.sentStart   ? 'yes' : 'no') + '"></span>' +
+               '<span class="sent-dot ' + (r.sentEnd     ? 'yes' : 'no') + '"></span>';
+    html += '<tr><td>' + esc(r.name) + '</td><td><span class="badge ' + bc + '">' + tl + '</span></td><td>' + esc(r.date) + '</td><td>' + esc(r.start) + '</td><td>' + esc(r.end) + '</td><td>' + dots + '</td>' +
       '<td><div class="actions-cell">' +
         '<button class="btn btn-sm" onclick="editRow(' + r.row + ')">Edit</button>' +
-        '<button class="btn btn-resend" onclick="resendRow(' + r.row + ', \'' + esc(r.name) + '\')">Resend</button>' +
-        '<button class="btn btn-danger" onclick="deleteRow(' + r.row + ', \'' + esc(r.name) + '\')">Delete</button>' +
+        '<button class="btn btn-resend" onclick="resendRow(' + r.row + ',\'' + esc(r.name) + '\')">Resend</button>' +
+        '<button class="btn btn-danger" onclick="deleteRow(' + r.row + ',\'' + esc(r.name) + '\')">Del</button>' +
       '</div></td></tr>';
   });
-
   html += '</tbody></table>';
   document.getElementById('tableWrap').innerHTML = html;
+
+  // Mobile cards
+  var cards = filtered.map(function(r) {
+    var bc = r.type === 'scouting' ? 'badge-scouting' : 'badge-pit';
+    var tl = r.type === 'scouting' ? 'Scouting' : 'Pit';
+    var dots = '<span class="sent-dot ' + (r.sentHeadsup ? 'yes' : 'no') + '" title="Heads-up"></span>' +
+               '<span class="sent-dot ' + (r.sentStart   ? 'yes' : 'no') + '" title="Start"></span>' +
+               '<span class="sent-dot ' + (r.sentEnd     ? 'yes' : 'no') + '" title="End"></span>';
+    return '<div class="shift-card">' +
+      '<div class="shift-card-top"><span class="shift-card-name">' + esc(r.name) + '</span><span class="badge ' + bc + '">' + tl + '</span></div>' +
+      '<div class="shift-card-meta">' + esc(r.date) + ' &nbsp; ' + esc(r.start) + ' &rarr; ' + esc(r.end) + ' &nbsp; ' + dots + '</div>' +
+      '<div class="shift-card-actions">' +
+        '<button class="btn btn-sm" onclick="editRow(' + r.row + ')">Edit</button>' +
+        '<button class="btn btn-resend" onclick="resendRow(' + r.row + ',\'' + esc(r.name) + '\')">Resend</button>' +
+        '<button class="btn btn-danger" onclick="deleteRow(' + r.row + ',\'' + esc(r.name) + '\')">Delete</button>' +
+      '</div></div>';
+  }).join('');
+  document.getElementById('cardsWrap').innerHTML = cards;
 }
 
-// ── ROW ACTIONS ──────────────────────────────────────────────────────────────
 function addRow() {
-  var name  = document.getElementById('addName').value.trim();
-  var type  = document.getElementById('addType').value;
-  var date  = document.getElementById('addDate').value;
+  var name = document.getElementById('addName').value.trim();
+  var type = document.getElementById('addType').value;
+  var date = document.getElementById('addDate').value;
   var start = document.getElementById('addStart').value.trim();
-  var end   = document.getElementById('addEnd').value.trim();
+  var end = document.getElementById('addEnd').value.trim();
   if (!name || !date || !start || !end) { showToast('Fill in all fields.', true); return; }
   google.script.run
     .withSuccessHandler(function() { showToast('Shift added!'); document.getElementById('addStart').value = ''; document.getElementById('addEnd').value = ''; loadSchedule(); })
@@ -537,32 +570,29 @@ function deleteRow(rowIndex, name) {
 }
 
 function resendRow(rowIndex, name) {
-  if (!confirm('Resend all notifications for ' + name + '? This will clear their sent flags and re-fire their DMs.')) return;
+  if (!confirm('Resend notifications for ' + name + '?')) return;
   google.script.run
-    .withSuccessHandler(function() { showToast('Notifications resent to ' + name + '!'); loadSchedule(); })
+    .withSuccessHandler(function() { showToast('Resent to ' + name + '!'); loadSchedule(); })
     .withFailureHandler(function(e) { showToast('Error: ' + e.message, true); })
     .resendRow(rowIndex);
 }
 
 function clearSentFlags() {
-  if (!confirm('Reset ALL notification flags? This lets the system resend all notifications.')) return;
+  if (!confirm('Reset ALL notification flags?')) return;
   google.script.run
     .withSuccessHandler(function() { showToast('All flags reset!'); loadSchedule(); })
     .withFailureHandler(function(e) { showToast('Error: ' + e.message, true); })
     .clearAllSentFlags();
 }
 
-// ── BULK IMPORT ───────────────────────────────────────────────────────────────
 function bulkImport() {
   var raw = document.getElementById('csvInput').value.trim();
   if (!raw) { showToast('Paste some CSV rows first.', true); return; }
-  var lines = raw.split('\n');
-  var rows  = [];
-  var errors = [];
-  lines.forEach(function(line, idx) {
-    var parts = line.split(',');
-    if (parts.length < 5) { errors.push('Line ' + (idx+1) + ': not enough columns'); return; }
-    rows.push({ name: parts[0].trim(), type: parts[1].trim(), date: parts[2].trim(), start: parts[3].trim(), end: parts[4].trim() });
+  var rows = [], errors = [];
+  raw.split('\n').forEach(function(line, idx) {
+    var p = line.split(',');
+    if (p.length < 5) { errors.push('Line ' + (idx+1) + ': not enough columns'); return; }
+    rows.push({ name: p[0].trim(), type: p[1].trim(), date: p[2].trim(), start: p[3].trim(), end: p[4].trim() });
   });
   if (errors.length) { showToast(errors[0], true); return; }
   google.script.run
@@ -571,21 +601,18 @@ function bulkImport() {
     .bulkAddRows(rows);
 }
 
-// ── PRINT ─────────────────────────────────────────────────────────────────────
 function printSchedule() {
-  var win = window.open('', '_blank');
   var filtered = activeDate ? allRows.filter(function(r) { return r.date === activeDate; }) : allRows;
   var rows = filtered.map(function(r) {
     return '<tr><td>' + esc(r.name) + '</td><td>' + r.type + '</td><td>' + r.date + '</td><td>' + r.start + '</td><td>' + r.end + '</td></tr>';
   }).join('');
-  win.document.write('<html><head><title>MECO 8324 Schedule</title><style>body{font-family:sans-serif;padding:20px;}table{border-collapse:collapse;width:100%;}th,td{border:1px solid #ccc;padding:8px;text-align:left;}th{background:#eee;}h1{margin-bottom:16px;}</style></head><body><h1>MECO 8324 - Team Schedule' + (activeDate ? ' (' + activeDate + ')' : '') + '</h1><table><thead><tr><th>Name</th><th>Type</th><th>Date</th><th>Start</th><th>End</th></tr></thead><tbody>' + rows + '</tbody></table></body></html>');
-  win.document.close();
-  win.print();
+  var win = window.open('', '_blank');
+  win.document.write('<html><head><title>MECO 8324 Schedule</title><style>body{font-family:sans-serif;padding:20px;}table{border-collapse:collapse;width:100%;}th,td{border:1px solid #ccc;padding:8px;}th{background:#eee;}</style></head><body><h2>MECO 8324 Schedule' + (activeDate ? ' — ' + activeDate : '') + '</h2><table><thead><tr><th>Name</th><th>Type</th><th>Date</th><th>Start</th><th>End</th></tr></thead><tbody>' + rows + '</tbody></table></body></html>');
+  win.document.close(); win.print();
 }
 
-// ── SLACK ACTIONS ─────────────────────────────────────────────────────────────
 function postSchedule() {
-  showToast('Posting schedule to Slack...');
+  showToast('Posting to Slack...');
   google.script.run
     .withSuccessHandler(function() { showToast('Posted to #tallahassee-2026!'); })
     .withFailureHandler(function(e) { showToast('Error: ' + e.message, true); })
@@ -595,12 +622,11 @@ function postSchedule() {
 function activateNotifications() {
   showToast('Activating...');
   google.script.run
-    .withSuccessHandler(function() { showToast('Notifications active! Firing every minute.'); })
+    .withSuccessHandler(function() { showToast('Notifications active — firing every minute.'); })
     .withFailureHandler(function(e) { showToast('Error: ' + e.message, true); })
     .runInstallTrigger();
 }
 
-// ── HELPERS ───────────────────────────────────────────────────────────────────
 function showToast(msg, isError) {
   var t = document.getElementById('toast');
   t.textContent = msg;
