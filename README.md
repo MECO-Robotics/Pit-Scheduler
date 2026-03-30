@@ -1,89 +1,154 @@
-# 🤖 Pit Scheduler
+# Pit Scheduler
 
-Auto-notifies your robotics team via Slack DM based on a pit schedule image.
+Google Apps Script + Google Sheets scheduler for robotics teams.  
+It posts shift schedules to Slack and sends each person DM reminders:
 
-## How it works
+- 15 minutes before shift start
+- At shift start
+- At shift end
 
-1. Upload a schedule photo → Gemini AI reads the grid
-2. Review & confirm the parsed names/times
-3. Hit "Schedule" → every person gets 3 Slack DMs:
-   - 🔔 15 minutes before their shift
-   - 🚨 At the exact start of their shift
-   - ✅ At the exact end of their shift
+## Features
 
----
+- Slack channel post grouped by role (`pit` or `scouting`) and date
+- Individual Slack DMs for each scheduled person
+- Automated reminder engine running every minute via Apps Script trigger
+- Web UI for:
+  - add/edit/delete shifts
+  - bulk CSV import
+  - resend notifications per row
+  - reset notification flags
+  - live "On Duty Right Now" and "Next Up" panels
+  - printable schedule view
+
+## Architecture
+
+This repository is currently a **Google Apps Script** project, not a Vercel/Node API app.
+
+- `code.gs`
+  - backend logic
+  - Google Sheets read/write
+  - Slack API calls
+  - trigger installation and notification checks
+  - web app endpoint (`doGet`)
+- `index.html`
+  - frontend UI served by Apps Script
+  - calls server functions through `google.script.run`
+
+## Prerequisites
+
+- Google account with access to Apps Script + Google Sheets
+- A Slack app bot token (`xoxb-...`) with permission to:
+  - open conversations
+  - post messages
+- A Google Sheet to store schedule rows
+
+## Sheet Format
+
+The first sheet is used with these columns:
+
+1. Name
+2. Type (`pit` or `scouting`)
+3. Date (`YYYY-MM-DD`)
+4. Start (for example `10:00 AM`)
+5. End (for example `10:45 AM`)
+6. Heads-up sent flag
+7. Start sent flag
+8. End sent flag
+
+Rows missing `Name`, `Date`, `Start`, or `End` are skipped by the scheduler.
 
 ## Setup
 
-### 1. Clone & open in GitHub
+### 1) Create an Apps Script project
 
-Push this folder to a new GitHub repo.
+Create a new project in [Apps Script](https://script.google.com/) and add:
 
-### 2. Deploy to Vercel
+- `code.gs` (copy from this repo)
+- an HTML file for the UI (see note in step 4)
 
-- Go to vercel.com → New Project → Import your GitHub repo
-- Vercel will detect it automatically — just click Deploy
+### 2) Configure constants in `code.gs`
 
-### 3. Set Environment Variables in Vercel
+Set these values at the top of `code.gs`:
 
-In your Vercel project → Settings → Environment Variables, add:
+- `SLACK_BOT_TOKEN`
+- `SLACK_CHANNEL`
+- `SHEET_ID`
+- `NAME_MAP` (name -> Slack user ID)
 
-| Variable | Value |
-|---|---|
-| `SLACK_BOT_TOKEN` | Your `xoxb-` token from api.slack.com |
-| `GEMINI_API_KEY` | Your key from aistudio.google.com |
-| `QSTASH_TOKEN` | Your token from upstash.com/qstash |
-| `APP_URL` | Your Vercel deployment URL, e.g. `https://pit-scheduler.vercel.app` |
+`NAME_MAP` keys should match names exactly as they appear in the schedule sheet.
 
-Redeploy after adding variables.
+### 3) Add the frontend file
 
-### Local development (Gemini + API routes)
+Copy this repo's `index.html` content into the Apps Script HTML file.
 
-Opening `public/index.html` in a static preview does **not** run `/api/*`. To parse schedules locally:
+### 4) Ensure HTML filename matches `doGet`
 
-1. Install the [Vercel CLI](https://vercel.com/docs/cli) if needed (`npm i -g vercel`).
-2. In the project root, create **`.env.local`** (gitignored) with at least `GEMINI_API_KEY`, plus any other variables from the table above that you need to test.
-3. Run **`npx vercel dev`** and open the URL it prints (often `http://localhost:3000`). The UI and `/api/parse-schedule` will share the same origin so uploads work.
+`doGet()` currently serves:
 
-Optional: visit `/api/test` while `vercel dev` is running to confirm environment variables and a simple Gemini text call.
-
-### 4. Fill in name-map.json
-
-Visit `https://your-app.vercel.app/api/list-users` in your browser.
-It shows a table of everyone in your Slack workspace with their IDs.
-
-Edit `name-map.json` to match names exactly as they appear on your schedule:
-
-```json
-{
-  "John Smith": "U012AB3CD",
-  "Jane Doe": "U098ZY7WX"
-}
+```js
+HtmlService.createHtmlOutputFromFile('Index')
 ```
 
-Push the updated file to GitHub — Vercel will redeploy automatically.
+So your Apps Script HTML file should be named `Index` (capital I), or update `doGet()` to match your chosen file name.
 
-### 5. Use it!
+### 5) Authorize and initialize
 
-Go to your Vercel URL, pick the competition date, upload the schedule image, and schedule away.
+In Apps Script editor:
 
----
+1. Run `postSchedule` once (prompts authorization)
+2. Run `installTrigger` once (creates minute-based trigger for `checkAndNotify`)
 
-## File Structure
+## Deploy the Web App
 
-```
-pit-scheduler/
-├── api/
-│   ├── parse-schedule.js        # Gemini vision parser
-│   ├── schedule-notifications.js # QStash job scheduler
-│   ├── send-notification.js     # Slack DM sender (called by QStash)
-│   ├── check-name.js            # Checks if name is in name-map
-│   ├── list-users.js            # Lists all Slack workspace users
-│   ├── slack-events.js          # Slack Events API (optional bot in channel)
-│   └── test.js                  # Env + Gemini smoke test at /api/test
-├── public/
-│   └── index.html               # Web UI
-├── name-map.json                # Name → Slack ID mapping (edit this!)
-├── package.json
-└── vercel.json
-```
+In Apps Script:
+
+1. `Deploy` -> `New deployment`
+2. Select type `Web app`
+3. Set access according to your team needs
+4. Deploy and open the web app URL
+
+## Using the App
+
+From the UI:
+
+- Add shifts manually in **Add Shift**
+- Paste rows in **Bulk Import CSV** using:
+  - `Name,Type,Date,Start,End`
+- Filter by date/type, print schedules, and manage entries
+- Use:
+  - **Post to Slack** -> calls `runPostSchedule()` / `postSchedule()`
+  - **Activate** -> calls `runInstallTrigger()` / `installTrigger()`
+  - **Reset Notif Flags** -> clears sent flags for all rows
+
+## Server Function Reference
+
+- `postSchedule()`: reads sheet, posts grouped schedule to channel, sends initial DMs
+- `installTrigger()`: creates (and replaces existing) `checkAndNotify` minute trigger
+- `checkAndNotify()`: sends heads-up/start/end DMs when within timing window
+- `getSchedule()`: returns rows for UI
+- `addRow()`, `updateRow()`, `deleteRow()`: schedule CRUD
+- `resendRow()`: resends DM for one row and clears sent flags for that row
+- `clearAllSentFlags()`: clears columns 6-8 on all data rows
+- `bulkAddRows()`: appends multiple rows from UI import
+- `getNameList()`: returns sorted keys from `NAME_MAP`
+
+## Troubleshooting
+
+- **No DMs are sent**: verify `SLACK_BOT_TOKEN` scopes and `NAME_MAP` IDs.
+- **Some users are skipped**: missing/mismatched `NAME_MAP` entry for that exact name.
+- **"Invalid time" errors**: use `h:mm AM/PM` format consistently.
+- **Trigger not running**: rerun `installTrigger` and check project triggers in Apps Script.
+- **UI doesn't load**: verify HTML filename matches `doGet()` (`Index` vs `index`).
+
+## Security Notes
+
+- Do not commit real Slack tokens to version control.
+- `NAME_MAP` contains personal identifiers (names and Slack user IDs); treat it as sensitive.
+- Consider moving secrets to Apps Script Properties Service instead of hardcoding.
+
+## Future Improvements
+
+- Move secrets to `PropertiesService` and remove token literals from source
+- Add strict validation for date/time/type on both frontend and backend
+- Replace `prompt()` edit flow with modal form validation
+- Add audit logs/metrics for notification success and failures
