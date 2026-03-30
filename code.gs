@@ -5,7 +5,7 @@
 
 // --------- CONFIGURATION - fill these in ---------------------------------------------------------------------------------------------------------------------------
 
-var SLACK_BOT_TOKEN = 'xoxb-877228569603-10781869295142-FCWIrlyhM3QXMQbAIllC4IG1';
+var SLACK_BOT_TOKEN = 'xoxb-YOUR_SLACK_TOKEN';
 var SLACK_CHANNEL   = 'tallahassee-2026';
 var SHEET_ID        = '1BNuUnVGpFxIDXf8kvAqRUQVJv78aW9tp2piICemm8iw';
 var NAME_MAP = {
