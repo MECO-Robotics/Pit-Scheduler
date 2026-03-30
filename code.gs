@@ -7,7 +7,7 @@
 
 var SLACK_BOT_TOKEN = 'xoxb-YOUR_SLACK_TOKEN';
 var SLACK_CHANNEL   = 'tallahassee-2026';
-var SHEET_ID        = '1BNuUnVGpFxIDXf8kvAqRUQVJv78aW9tp2piICemm8iw';
+var SHEET_ID        = 'YOUR_GOOGLE_SHEET_ID';
 var NAME_MAP = {
   'Aidan St. John'       : 'U5S5QM9RC',
   'Amadeus Jackson'      : 'U0A82QD4SSY',
