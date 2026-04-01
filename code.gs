@@ -10,11 +10,7 @@ var SLACK_CHANNEL   = 'tallahassee-2026';
 var SHEET_ID        = 'YOUR_GOOGLE_SHEET_ID';
 var NAME_MAP = {
   'Aidan St. John'       : 'U5S5QM9RC',
-  'Amadeus Jackson'      : 'U0A82QD4SSY',
-  'Anumita Purwar'       : 'U0A8M22H075',
-  'Barb DiMiceli'        : 'U0A7VAYJR8S',
-  'Bianca'               : 'U04PTPG1H41',
-  'Brenden Brady'        : 'U078PT2B830',
+  'Amadeus Jackson'      : 'U0A82QD4SSY'
   'Brian'                : 'U05SSBHKJLV',
   'Christina Broerman'   : 'US9G87N5T',
   'Conrad Bohn'          : 'U0AKG0WS78C',
