@@ -89,20 +89,12 @@ function postSchedule() {
   var dmsSent = 0;
   var dmsSkipped = [];
   for (var i = 0; i < schedule.length; i++) {
-    var entry  = schedule[i];
-    var userId = NAME_MAP[entry.name];
-    if (!userId) {
+    var entry = schedule[i];
+    if (sendAssignmentDM(entry.name, entry.type, entry.date, entry.start, entry.end)) {
+      dmsSent++;
+    } else {
       dmsSkipped.push(entry.name);
-      continue;
     }
-    var typeLabel = entry.type === 'scouting' ? 'Scouting' : 'Pit Crew';
-    sendSlackDM(userId,
-      '*You have been scheduled for ' + typeLabel + ' duty!*\n' +
-      '*Date:* ' + entry.date + '\n' +
-      '*Time:* ' + entry.start + ' to ' + entry.end + '\n\n' +
-      '_You will get a reminder 15 min before, at the start, and when your shift ends._'
-    );
-    dmsSent++;
   }
 
   Logger.log('Schedule posted. DMs sent: ' + dmsSent + '. Skipped: ' + dmsSkipped.join(', '));
@@ -326,6 +318,28 @@ function sendSlackDM(slackUserId, message) {
   }
 }
 
+/** Same DM text as postSchedule; returns true if a DM was sent. */
+function sendAssignmentDM(name, type, date, start, end) {
+  var n = (name || '').toString().trim();
+  if (!n || !date || !start || !end) {
+    return false;
+  }
+  var t = (type || 'pit').toString().trim().toLowerCase();
+  var userId = NAME_MAP[n];
+  if (!userId) {
+    Logger.log('sendAssignmentDM: no NAME_MAP entry for "' + n + '"');
+    return false;
+  }
+  var typeLabel = t === 'scouting' ? 'Scouting' : 'Pit Crew';
+  sendSlackDM(userId,
+    '*You have been scheduled for ' + typeLabel + ' duty!*\n' +
+    '*Date:* ' + date + '\n' +
+    '*Time:* ' + start + ' to ' + end + '\n\n' +
+    '_You will get a reminder 15 min before, at the start, and when your shift ends._'
+  );
+  return true;
+}
+
 function parseDateTime(date, timeStr) {
   var match = timeStr.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
   if (!match) {
@@ -406,6 +420,7 @@ function getSchedule() {
 function addRow(name, type, date, start, end) {
   var sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
   sheet.appendRow([name, type, date, start, end, '', '', '']);
+  sendAssignmentDM(name, type, date, start, end);
   return { ok: true };
 }
 
@@ -457,6 +472,7 @@ function bulkAddRows(rows) {
     var r = rows[i];
     if (!r.name || !r.date || !r.start || !r.end) continue;
     sheet.appendRow([r.name, r.type || 'pit', r.date, r.start, r.end, '', '', '']);
+    sendAssignmentDM(r.name, r.type || 'pit', r.date, r.start, r.end);
     count++;
   }
   return count;
