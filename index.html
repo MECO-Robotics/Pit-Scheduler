@@ -184,7 +184,7 @@
 
     /* TABLE — scrollable on mobile */
     .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 500px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 580px; }
     th { text-align: left; padding: 9px 10px; color: var(--gray-dim); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid var(--navy-border); font-weight: 600; }
     td { padding: 10px 10px; border-bottom: 1px solid rgba(30,58,110,0.4); vertical-align: middle; }
     tr:last-child td { border-bottom: none; }
@@ -210,6 +210,14 @@
     .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.64rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
     .badge-pit      { background: rgba(192,57,43,0.2); color: #f87171; border: 1px solid rgba(192,57,43,0.35); }
     .badge-scouting { background: rgba(96,165,250,0.15); color: #93c5fd; border: 1px solid rgba(96,165,250,0.3); }
+    .badge-past     { background: rgba(71,85,105,0.35); color: #94a3b8; border: 1px solid rgba(100,116,139,0.45); }
+    .badge-live     { background: rgba(52,211,153,0.18); color: #6ee7b7; border: 1px solid rgba(52,211,153,0.35); }
+    .badge-upcoming { background: rgba(148,163,184,0.12); color: var(--gray); border: 1px solid var(--navy-border); }
+
+    tr.shift-past td { color: var(--gray-dim); }
+    tr.shift-past .badge-pit, tr.shift-past .badge-scouting { opacity: 0.7; }
+    .shift-card.shift-past { opacity: 0.88; border-color: #243552; }
+    .shift-card.shift-past .shift-card-meta { color: var(--gray-dim); }
 
     .sent-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 2px; }
     .sent-dot.yes { background: #34d399; }
@@ -340,6 +348,12 @@
         <option value="pit">Pit</option>
         <option value="scouting">Scouting</option>
       </select>
+      <span class="toolbar-label">Time:</span>
+      <select id="filterTime" onchange="renderTable()">
+        <option value="">All</option>
+        <option value="active">Now &amp; upcoming</option>
+        <option value="past">Past</option>
+      </select>
       <div class="toolbar-gap"></div>
       <button class="btn btn-outline" style="font-size:0.74rem;padding:7px 10px;" onclick="printSchedule()">Print</button>
     </div>
@@ -366,7 +380,7 @@ window.onload = function() {
   loadSchedule();
   updateClock();
   setInterval(updateClock, 1000);
-  setInterval(updateNowAndNext, 30000);
+  setInterval(refreshTimeSensitiveUI, 30000);
 };
 
 function updateClock() {
@@ -476,6 +490,23 @@ function parseTime(date, timeStr) {
   } catch(e) { return null; }
 }
 
+/** 'past' | 'now' | 'upcoming' | null if times not parseable */
+function getShiftTimeStatus(r) {
+  if (!r.date || !r.start || !r.end) return null;
+  var s = parseTime(r.date, r.start);
+  var e = parseTime(r.date, r.end);
+  if (!s || !e) return null;
+  var now = new Date();
+  if (now >= e) return 'past';
+  if (now >= s && now < e) return 'now';
+  return 'upcoming';
+}
+
+function refreshTimeSensitiveUI() {
+  updateNowAndNext();
+  renderTable();
+}
+
 function updateStats(rows) {
   var f = activeDate ? rows.filter(function(r) { return r.date === activeDate; }) : rows;
   document.getElementById('statTotal').textContent    = f.length;
@@ -487,9 +518,17 @@ function updateStats(rows) {
 function renderTable() {
   updateStats(allRows);
   var filterType = document.getElementById('filterType').value;
+  var filterTime = document.getElementById('filterTime').value;
   var filtered = allRows.filter(function(r) {
     if (activeDate && r.date !== activeDate) return false;
     if (filterType && r.type !== filterType) return false;
+    var st = getShiftTimeStatus(r);
+    if (filterTime === 'past') {
+      if (st !== 'past') return false;
+    } else if (filterTime === 'active') {
+      if (st === 'past') return false;
+      if (st === null) return true;
+    }
     return true;
   });
 
@@ -500,14 +539,27 @@ function renderTable() {
   }
 
   // Desktop table
-  var html = '<table><thead><tr><th>Name</th><th>Type</th><th>Date</th><th>Start</th><th>End</th><th>Sent</th><th></th></tr></thead><tbody>';
+  var html = '<table><thead><tr><th>Name</th><th>Type</th><th>Date</th><th>Start</th><th>End</th><th>Status</th><th>Sent</th><th></th></tr></thead><tbody>';
   filtered.forEach(function(r) {
     var bc = r.type === 'scouting' ? 'badge-scouting' : 'badge-pit';
     var tl = r.type === 'scouting' ? 'Scouting' : 'Pit';
+    var st = getShiftTimeStatus(r);
+    var statusBadge = '';
+    var rowClass = '';
+    if (st === 'past') {
+      statusBadge = '<span class="badge badge-past" title="Shift end time has passed">Past</span>';
+      rowClass = ' class="shift-past"';
+    } else if (st === 'now') {
+      statusBadge = '<span class="badge badge-live" title="Currently on this shift">On now</span>';
+    } else if (st === 'upcoming') {
+      statusBadge = '<span class="badge badge-upcoming" title="Shift has not started yet">Upcoming</span>';
+    } else {
+      statusBadge = '<span class="badge badge-upcoming" title="Could not parse times">—</span>';
+    }
     var dots = '<span class="sent-dot ' + (r.sentHeadsup ? 'yes' : 'no') + '"></span>' +
                '<span class="sent-dot ' + (r.sentStart   ? 'yes' : 'no') + '"></span>' +
                '<span class="sent-dot ' + (r.sentEnd     ? 'yes' : 'no') + '"></span>';
-    html += '<tr><td>' + esc(r.name) + '</td><td><span class="badge ' + bc + '">' + tl + '</span></td><td>' + esc(r.date) + '</td><td>' + esc(r.start) + '</td><td>' + esc(r.end) + '</td><td>' + dots + '</td>' +
+    html += '<tr' + rowClass + '><td>' + esc(r.name) + '</td><td><span class="badge ' + bc + '">' + tl + '</span></td><td>' + esc(r.date) + '</td><td>' + esc(r.start) + '</td><td>' + esc(r.end) + '</td><td>' + statusBadge + '</td><td>' + dots + '</td>' +
       '<td><div class="actions-cell">' +
         '<button class="btn btn-sm" onclick="editRow(' + r.row + ')">Edit</button>' +
         '<button class="btn btn-resend" onclick="resendRow(' + r.row + ',\'' + esc(r.name) + '\')">Resend</button>' +
@@ -521,11 +573,24 @@ function renderTable() {
   var cards = filtered.map(function(r) {
     var bc = r.type === 'scouting' ? 'badge-scouting' : 'badge-pit';
     var tl = r.type === 'scouting' ? 'Scouting' : 'Pit';
+    var st = getShiftTimeStatus(r);
+    var statusBadge = '';
+    var cardPast = '';
+    if (st === 'past') {
+      statusBadge = '<span class="badge badge-past">Past</span>';
+      cardPast = ' shift-past';
+    } else if (st === 'now') {
+      statusBadge = '<span class="badge badge-live">On now</span>';
+    } else if (st === 'upcoming') {
+      statusBadge = '<span class="badge badge-upcoming">Upcoming</span>';
+    } else {
+      statusBadge = '<span class="badge badge-upcoming">—</span>';
+    }
     var dots = '<span class="sent-dot ' + (r.sentHeadsup ? 'yes' : 'no') + '" title="Heads-up"></span>' +
                '<span class="sent-dot ' + (r.sentStart   ? 'yes' : 'no') + '" title="Start"></span>' +
                '<span class="sent-dot ' + (r.sentEnd     ? 'yes' : 'no') + '" title="End"></span>';
-    return '<div class="shift-card">' +
-      '<div class="shift-card-top"><span class="shift-card-name">' + esc(r.name) + '</span><span class="badge ' + bc + '">' + tl + '</span></div>' +
+    return '<div class="shift-card' + cardPast + '">' +
+      '<div class="shift-card-top"><span class="shift-card-name">' + esc(r.name) + '</span><span style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;"><span class="badge ' + bc + '">' + tl + '</span>' + statusBadge + '</span></div>' +
       '<div class="shift-card-meta">' + esc(r.date) + ' &nbsp; ' + esc(r.start) + ' &rarr; ' + esc(r.end) + ' &nbsp; ' + dots + '</div>' +
       '<div class="shift-card-actions">' +
         '<button class="btn btn-sm" onclick="editRow(' + r.row + ')">Edit</button>' +
