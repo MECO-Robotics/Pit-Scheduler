@@ -1,0 +1,14 @@
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// CONFIGURATION TEMPLATE - Copy to config.gs and fill in your values
+// This file should NOT be committed to version control
+// ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+var SLACK_BOT_TOKEN = 'xoxb-YOUR_SLACK_TOKEN';
+var SLACK_CHANNEL   = 'your-channel-name';
+var SHEET_ID        = 'YOUR_GOOGLE_SHEET_ID';
+
+var NAME_MAP = {
+  // Add name -> Slack user ID mappings here
+  // Format: 'Full Name': 'UXXXXXXXXXX',
+};
+

@@ -3,54 +3,16 @@
 // Reads from Google Sheets, posts to Slack, DMs individuals on a timer
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-// --------- CONFIGURATION - fill these in ---------------------------------------------------------------------------------------------------------------------------
-
-var SLACK_BOT_TOKEN = 'xoxb-YOUR_SLACK_TOKEN';
-var SLACK_CHANNEL   = 'tallahassee-2026';
-var SHEET_ID        = 'YOUR_GOOGLE_SHEET_ID';
-var NAME_MAP = {
-  'Aidan St. John'       : 'U5S5QM9RC',
-  'Amadeus Jackson'      : 'U0A82QD4SSY'
-  'Brian'                : 'U05SSBHKJLV',
-  'Christina Broerman'   : 'US9G87N5T',
-  'Conrad Bohn'          : 'U0AKG0WS78C',
-  'Danette Rieckhoff'    : 'U04HJC2TUF9',
-  'Student Mentor Daniel': 'U02T7SZJPDY',
-  'Dayana Chanson'       : 'U05NH5PSW7P',
-  'Doug Leppard'         : 'U5A5QEHQO',
-  'Dylan Duenas'         : 'U08FU1QMWUC',
-  'Eric Chanson'         : 'U05PZ7UN91N',
-  'Francisco freitez'    : 'U05PZ7ULTTJ',
-  'Grant Brady'          : 'U078WQAFE02',
-  'Heather Brady'        : 'U078TT9C3E1',
-  'iliyana'              : 'U0A8Q0XT353',
-  'Jerry James'          : 'U04Q7PZSM4Y',
-  'Justin Bohn'          : 'U0B8VF9LNS2',
-  'Kaleb'                : 'U05N5GRERPH',
-  'Kayleigh Di Miceli'   : 'U0A0H4DGRTQ',
-  'Lily Rieckhoff'       : 'U03EW7REUEM',
-  'Manny'                : 'U07V71LH2P5',
-  'Martha Jackson'       : 'U0ABBUHDPB9',
-  'Michael Jackson'      : 'U0A8RB3NCHL',
-  'Milana Rosado'        : 'U0A8PL7TN0Y',
-  'Moses H.R.'           : 'U04HRBC9UQJ',
-  'Nathaniel Foster'     : 'U5AFU0LUC',
-  'Neil Mehrotra'        : 'U0A8C4Q0VGR',
-  'Nikki'                : 'U65KSA7Q',
-  'Paul'                 : 'U5AFTVDB6',
-  'Paulette Hernandez'   : 'U0A7DTFPDGF',
-  'Phelan'               : 'U02BEH453GC',
-  'Ryan Chanson'         : 'U05N5GRAWET',
-  'Sage Christopher'     : 'U06C14TLTG8',
-  'Sarah Aurrecoechea'   : 'U06V2MJUR6G',
-  'Scott DiMiceli'       : 'U0A7TA0E0PQ',
-  'Synamon Bohn'         : 'U03AP5AFD0C',
-  'Tonja Christopher'    : 'U06BR8GQWK0',
-  'Tracy Thatcher'       : 'U025TLXFAF7',
-  'Uncle Jon Thatcher'   : 'U06QR58H7D0',
-  'Yanira Manzano'       : 'U0A9K6K7JR4',
-  'Yosmar Pulgar'        : 'U05P9DQWNEP'
-};
+// --------- CONFIGURATION ---------------------------------------------------------------------------------------------------------------------------
+// 
+// Copy config.gs.example to config.gs and fill in your values there.
+// The config.gs file is listed in .gitignore and will not be committed.
+//
+// Required variables (defined in config.gs):
+//   - SLACK_BOT_TOKEN
+//   - SLACK_CHANNEL
+//   - SHEET_ID
+//   - NAME_MAP
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // STEP 1 - Select "postSchedule" in the dropdown and click Run

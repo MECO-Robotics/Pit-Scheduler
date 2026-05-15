@@ -1,0 +1,6 @@
+# Local configuration with sensitive data (names, Slack IDs, tokens, sheet IDs)
+config.gs
+
+.DS_Store
+node_modules/
+*.log
